@@ -208,8 +208,12 @@ usethis::use_data(idd_vacc_10yr, overwrite = TRUE)
 
 
 
-
-
+# # Raw Vaccination Data ----------------------------------------------------
+# git_token <- "AB63TGCIYANL5EQ647HRXH3AYAWZ6"
+# age_vacc_data_raw <- readr::read_csv(paste0("https://raw.githubusercontent.com/govex/Covid19-demographics/main/demographics_by_state.csv?token=",
+#                                             git_token))
+# usethis::use_data(age_vacc_data_raw, overwrite = TRUE)
+# 
 
 
 

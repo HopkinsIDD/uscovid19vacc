@@ -536,10 +536,12 @@ get_pop_Xyr_spline <- function(age_data, age_group_data){
 #' @export
 #'
 #' @examples
-pull_cci_vacc <- function(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6"){
+pull_cci_vacc <- function(git_token = "AB63TGHIBZSQGC2CBZ5SFEDAYPB7I", pull_raw=TRUE){
 
-    age_vacc_data_raw <- readr::read_csv(paste0("https://raw.githubusercontent.com/govex/Covid19-demographics/main/demographics_by_state.csv?token=",
-                                                git_token)) %>%
+    age_vacc_data_raw <- readr::read_csv(
+        paste0("https://raw.githubusercontent.com/govex/Covid19-demographics/main/demographics_by_state_cleaned.csv?token=",
+               git_token)) %>%
+        
         filter(Category=="Vaccines" & grepl("age", Demo_cat_0)) %>%
         filter(Demo_cat_1!="unknown")
 
@@ -938,7 +940,7 @@ get_cci_vacc_Xyr <- function(cci_vacc_clean,
 #' @export
 #'
 #' @examples
-get_clean_us_agevacc <- function(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6"){
+get_clean_us_agevacc <- function(git_token = "AB63TGHIBZSQGC2CBZ5SFEDAYPB7I"){
 
     # Load state populations & IDD data
     data("state_pop_age5yr")
@@ -987,7 +989,7 @@ get_clean_us_agevacc <- function(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6"){
 #' @examples
 get_standardized_us_agevacc <- function(vacc_data = NULL,
                                         age_groups = "5yr",
-                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6"){
+                                        git_token = "AB63TGHIBZSQGC2CBZ5SFEDAYPB7I"){
 
     # Load latest vaccination by state
     daily_state_vacc <- suppressMessages(get_state_vacc() %>% filter(!is.na(dose1)))

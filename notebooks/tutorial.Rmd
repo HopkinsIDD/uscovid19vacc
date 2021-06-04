@@ -30,17 +30,17 @@ Pull data from JHU CCI github and combine with JHU IDD data that is part of the 
 ```{r}
 
 # Get clean, but not age group standardized data
-vacc_data <- get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+vacc_data <- get_clean_us_agevacc(git_token = "AB63TGHIBZSQGC2CBZ5SFEDAYPB7I")
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_5yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "5yr", # "10yr"
-                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+                                        git_token = "AB63TGHIBZSQGC2CBZ5SFEDAYPB7I")
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "10yr", 
-                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+                                        git_token = "AB63TGHIBZSQGC2CBZ5SFEDAYPB7I")
 
 ```
 
