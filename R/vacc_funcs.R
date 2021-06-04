@@ -568,7 +568,8 @@ clean_cci_vacc <- function(age_vacc_data_raw=cci_vacc_data){
         # filter(!(State=="DE" & Estimate_type=="total_cumulative")) %>%
         filter(!(State=="NJ" & Estimate_type=="rate_percent")) %>%  # Drop these because they also have numbers vaccinated
         filter(!(State=="DE" & !(Estimate_type=="total_cumulative" & Metric=="doses_admin"))) %>%
-        mutate(Metric = ifelse(State=="DE", "people_initiated", Metric))
+        mutate(Metric = ifelse(State=="DE", "people_initiated", Metric)) %>%
+        mutate(Metric = ifelse(State=="LA" & Metric=="people_initiated", "people_partial", Metric))
 
     # Fix IL
     age_vacc_tmp <- age_vacc_data_raw %>%

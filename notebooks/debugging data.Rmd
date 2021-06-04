@@ -10,6 +10,8 @@ Pull data from JHU CCI github and combine with JHU IDD data that is part of the 
 
 ```{r setup}
 library(tidyverse)
+library(lubridate)
+
 
 plot_state_curves <- function(vacc_age_data=vacc_data_10yr, states="DE"){
     print(vacc_age_data %>% filter(USPS %in% states) %>%
@@ -34,7 +36,7 @@ plot_state_curves <- function(vacc_age_data=vacc_data_10yr, states="DE"){
 
 # Run functions to generat data
 
-```{r}
+```{r, message=FALSE, echo=FALSE}
 
 # Get clean, but not age group standardized data
 vacc_data <- get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6") %>% suppressMessages()
@@ -85,7 +87,7 @@ dev.off()
 ### 1. Major Issues
 
 ```{r}
-usps_samp <- c("AR","DE","DC","IA","NY","LA","MT","NH","OK","PR","WY","WV")
+usps_samp <- c("AR","DE","IA","NY","LA","MT","NH","OK","PR","WY","WV")
 vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
               arrange(prop_vacc_age) %>%
               mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
@@ -161,7 +163,6 @@ state_pop_ageXyr = state_pop_age10yr
 
 plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
 
-
 ```
 
 
@@ -170,6 +171,9 @@ plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
 - Changed age groups
 ```{r}
 state_ <- "DE"
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
 vacc_data %>% filter(USPS==state_) %>% View()
 # missing from these data
 
@@ -232,6 +236,43 @@ plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
 
 
 
+#### LA
+- Changed age groups
+```{r}
+state_ <- "LA"
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+# Pull Raw CCI data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+
+# IDD data
+data("idd_vacc_clean")
+idd_vacc_clean %>% filter(USPS == state_)
+idd_vacc_data %>% filter(state == "New York")
+# none available
+
+
+
+# # Dig into this function
+# cci_vacc_data_clean <- process_cci_age_vacc(data=cci_vacc_data,
+#                                       daily_state_vacc = daily_state_vacc,
+#                                       state_pop_ageXyr = state_pop_age10yr) %>%
+#     left_join(state_pop_age10yr %>% select(USPS, geoid) %>% distinct())
+
+data=cci_vacc_data %>% filter(State==state_)
+state_pop_ageXyr = state_pop_age10yr
+# fixed -- dropped extra categories
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+
+```
+
+
+
 
 
 #### NC
@@ -259,7 +300,7 @@ Drop: "2021-03-24" and "2021-04-02"
 ### 2. Moderate Issues
 
 ```{r}
-usps_samp <- c("FL","MN","MA","MD","HI","IL","MT","NJ","NE","NC","NM","NV","ND")
+usps_samp <- c("FL","MN","MA","MD","HI","IL","MT","NJ","NE","NC","NM","NV")
 vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
               arrange(prop_vacc_age) %>%
               mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
@@ -338,7 +379,7 @@ Something weird with data for last date.
 4. VT - Drop "2021-03-24"
 5. RI - Drop "2021-03-20"
 6. NC - Drop "2021-03-24" and "2021-04-02"
-7. ND - Drop "2021-03-25" and oldest group in "2021-04-02"
+7. DE - Drop "2021-03-25" and age=="85_100" on "2021-04-02"
 
 
 
