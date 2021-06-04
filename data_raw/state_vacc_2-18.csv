@@ -1,0 +1,81 @@
+state,state1_county0,County,date_released,date_added,age,percent_of_vac,percent_coverage,dose,population,notes,,,link (if different)
+Alabama,1,,02/17/2021,02/17/2021,75_100,,,170041,348390,,,,https://www.alabamapublichealth.gov/covid19vaccine/assets/cov-al-vaccine-report-021721.pdf
+Alabama,1,,02/17/2021,02/17/2021,70_74,,,59516,225999,,,,https://www.alabamapublichealth.gov/covid19vaccine/assets/cov-al-vaccine-report-021721.pdf
+Alabama,1,,02/17/2021,02/17/2021,65_69,,,56585,275448,,,,https://www.alabamapublichealth.gov/covid19vaccine/assets/cov-al-vaccine-report-021721.pdf
+Alabama,1,,02/17/2021,02/17/2021,16_64,,,217799,3088785,,,,https://www.alabamapublichealth.gov/covid19vaccine/assets/cov-al-vaccine-report-021721.pdf
+Arizona,0,Maricopa,02/16/2020,02/17/2021,75_100,53.00%,,,,,,,https://www.maricopa.gov/5671/Public-Vaccine-Data
+Alaska,1,,02/04/2021,02/17/2021,60_100,51.00%,,,,,,,
+Arkansas,,,,,,,,,,,,,
+California,1,,2/17/2021,02/17/2021,0_17,0.00%,,,,,,,https://covid19.ca.gov/vaccines/
+California,1,,2/17/2021,02/17/2021,18_49,28.70%,,,,,,,https://covid19.ca.gov/vaccines/
+California,1,,2/17/2021,02/17/2021,50_64,16.60%,,,,,,,https://covid19.ca.gov/vaccines/
+California,1,,2/17/2021,02/17/2021,65_100,54.70%,,,,,,,https://covid19.ca.gov/vaccines/
+Colorado,1,,02/04/2021,2/18/2021,60_100,57.00%,,,,,,,
+Connecticut,,,,,,,,,,,,,https://news.hamlethub.com/danbury/life/48283-connecticut-has-vaccinated-49-of-population-over-age-75
+Delaware,1,,02/04/2021,2/18/2021,65_100,46.00%,,,,,,,
+Florida,1,,02/04/2021,2/18/2021,65_100,72.00%,,,,,,,
+Georgia,,,,,,,,,,,,,
+Hawaii,1,,2/17/2021,2/18/2021,75_100,,,58971,107600,,,,https://health.hawaii.gov/coronavirusdisease2019/what-you-should-know/current-situation-in-hawaii/
+Idaho,,,,,,,,,,,,,
+Illinois,1,,2/17/2021,2/18/2021,65_100,,,751355,,,,,https://www.dph.illinois.gov/covid19/vaccinedata?county=Illinois
+Indiana,1,,02/04/2021,2/18/2021,60_100,57.00%,,,,,,,
+Iowa,1,,,2/18/2021,0_17,0.21%,,,,,,,https://coronavirus.iowa.gov/pages/vaccineinformation#VaccineInformation
+Iowa,1,,,2/18/2021,18_29,10.44%,,,,,,,
+Iowa,1,,,2/18/2021,30_39,13.30%,,,,,,,
+Iowa,1,,,2/18/2021,40_49,13.21%,,,,,,,
+Iowa,1,,,2/18/2021,50_59,14.48%,,,,,,,
+Iowa,1,,,2/18/2021,60_69,17.75%,,,,,,,
+Iowa,1,,,2/18/2021,70_79,15.80%,,,,,,,
+Iowa,1,,,2/18/2021,80_100,14.81%,,,,,,,
+Kansas,1,,02/04/2021,2/18/2021,65_100,37.00%,,,,,,,
+Kentucky,,,,,,,,,,,,,
+Louisiana,1,,02/04/2021,2/18/2021,60_100,68.00%,,,,,,,
+Maine,1,,02/04/2021,2/18/2021,60_100,46.00%,,,,,,,
+Maryland,1,,02/04/2021,2/18/2021,60_100,43.00%,,,,,,,
+Massachusetts,1,,02/04/2021,2/18/2021,70_100,13.00%,,,,,,,
+Michigan,1,,02/04/2021,2/18/2021,65_100,46.00%,,,,,,,
+Minnesota,1,,02/04/2021,2/18/2021,65_100,37.00%,,,,,,,
+Mississippi,1,,02/04/2021,2/18/2021,65_100,51.00%,,,,,,,
+Missouri,1,,/,2/18/2021,65_100,42.00%,,,,,,,
+Montana,,,,,,,,,,,,,
+Nebraska,1,,02/04/2021,2/18/2021,65_100,32.00%,,,,,,,
+Nevada,,,,,,,,,,,,,
+New Hampshire,,,,,,,,,,,,,
+New Jersey,1,,02/04/2021,2/18/2021,65_100,35.00%,,,,,,,
+New Mexico,,,,,,,,,,,,,
+New York,,,,,,,,,,,,,
+North Carolina,1,,02/04/2021,2/18/2021,65_100,66.00%,,,,,,,
+North Dakota,1,,02/14/2021,2/18/2021,0_18,,1.50%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,19_29,,5.60%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,30_39,,6.50%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,40_49,,8.60%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,50_59,,11.40%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,60_69,,21.40%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,70_79,,43.20%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+North Dakota,1,,02/14/2021,2/18/2021,80_100,,56.10%,,,,,,https://www.health.nd.gov/covid19vaccine/dashboard
+Ohio,1,,02/04/2021,2/18/2021,60_100,57.00%,,,,,,,
+Oklahoma,,,,,,,,,,,,,
+Oregon,1,,02/04/2021,2/18/2021,60_100,32.00%,,,,,,,
+Pennsylvania,1,,02/04/2021,2/18/2021,65_100,23.00%,,,,,,,
+Rhode Island,1,,02/04/2021,2/18/2021,60_100,31.00%,,,,,,,
+South Carolina,1,,2/16/2021,2/18/2021,65_100,,,362543,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Carolina,1,,2/16/2021,2/18/2021,61_64,,,20421,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Carolina,1,,2/16/2021,2/18/2021,51_60,,,46702,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Carolina,1,,2/16/2021,2/18/2021,41_50,,,41695,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Carolina,1,,2/16/2021,2/18/2021,31_40,,,38436,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Carolina,1,,2/16/2021,2/18/2021,21_30,,,27451,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Carolina,1,,2/16/2021,2/18/2021,16_20,,,2204,,,,,https://scdhec.gov/covid19/covid-19-vaccination-dashboard
+South Dakota,1,,02/04/2021,2/18/2021,60_100,47.00%,,,,,,,
+Tennessee,1,,02/04/2021,2/18/2021,60_100,55.00%,,,,,,,
+Texas,1,,02/04/2021,2/18/2021,60_100,42.00%,,,,,,,
+Utah,,,,,,,,,,,,,
+Vermont,1,,02/04/2021,2/18/2021,60_100,34.00%,,,,,,,
+Virginia,1,,02/04/2021,2/18/2021,60_100,45.00%,,,,,,,
+Washington,1,,2/16/2021,2/18/2021,0_19,16.00%,,,,,,,https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard
+Washington,1,,2/16/2021,2/18/2021,20_39,39.00%,,,,,,,https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard
+Washington,1,,2/16/2021,2/18/2021,40_59,28.00%,,,,,,,https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard
+Washington,1,,2/16/2021,2/18/2021,60_79,13.00%,,,,,,,https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard
+Washington,1,,2/16/2021,2/18/2021,80_100,3.00%,,,,,,,https://www.doh.wa.gov/Emergencies/COVID19/DataDashboard
+West Virginia,1,,02/04/2021,2/18/2021,65_100,45.00%,,,,,,,
+Wisconsin,1,,02/04/2021,2/18/2021,65_100,35.00%,,,,,,,
+Wyoming,,,,,,,,,,,,,

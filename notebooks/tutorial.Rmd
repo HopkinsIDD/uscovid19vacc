@@ -1,0 +1,123 @@
+---
+title: "uscovid19vacc Tutorial"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+# GET VACCINATION BY AGE AND STATE - USA
+
+```{r setup}
+library(tidyverse)
+#library(uscovid19vacc)
+source("R/vacc_funcs.R")
+
+```
+
+
+## Current Vaccination Coverage
+```{r}
+
+daily_state_vacc <- get_state_vacc() %>%
+    filter(!is.na(dose1))
+
+```
+
+
+## Pull and Clean Data
+Pull data from JHU CCI github and combine with JHU IDD data that is part of the package.
+
+```{r}
+
+# Get clean, but not age group standardized data
+vacc_data <- get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+
+# Make it standardized to either 5yr or 10 year age groups
+vacc_data_5yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
+                                        age_groups = "5yr", # "10yr"
+                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+
+# Make it standardized to either 5yr or 10 year age groups
+vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
+                                        age_groups = "10yr", 
+                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+
+```
+
+
+
+## Plot a sample of states to check
+
+```{r}
+usps_samp <- sample(unique(vacc_data_5yr$USPS), 12, replace = FALSE)
+vacc_data_5yr %>% filter(USPS %in% usps_samp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS)
+```
+
+```{r}
+vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS)
+```
+
+
+
+## Generate plots of all 
+
+```{r}
+dir.create("figures", recursive = TRUE, showWarnings = FALSE)
+states_ <- sort(unique(vacc_data_5yr$USPS))
+pages_ <- ceiling(length(states_)/9)
+state_groups <- sort(rep(1:pages_, 9))[1:length(states_)]
+
+pdf(paste0("figures/prop_vacc_by_age_", Sys.Date(), ".pdf"), height=11, width = 8.5)
+for (i in 1:pages_){
+    state_tmp <- states_[state_groups==i]
+    print(vacc_data_5yr %>% filter(USPS %in% state_tmp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS))
+}
+dev.off()
+
+```
+
+
+
+
+
+
+

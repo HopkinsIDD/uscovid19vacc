@@ -1,0 +1,480 @@
+---
+title: "uscovid19 - Bug fixing"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Pull and Clean Data
+Pull data from JHU CCI github and combine with JHU IDD data that is part of the package.
+
+```{r setup}
+library(tidyverse)
+
+plot_state_curves <- function(vacc_age_data=vacc_data_10yr, states="DE"){
+    print(vacc_age_data %>% filter(USPS %in% states) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS))
+}
+
+
+```
+
+
+# Run functions to generat data
+
+```{r}
+
+# Get clean, but not age group standardized data
+vacc_data <- get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6") %>% suppressMessages()
+
+# Make it standardized to either 5yr or 10 year age groups
+vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
+                                        age_groups = "10yr", 
+                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6") %>% suppressMessages()
+
+```
+
+
+## Generate plots of all 
+Plot and save to check each state.
+
+```{r}
+dir.create("figures", recursive = TRUE, showWarnings = FALSE)
+states_ <- sort(unique(vacc_data_10yr$USPS))
+pages_ <- ceiling(length(states_)/9)
+state_groups <- sort(rep(1:pages_, 9))[1:length(states_)]
+
+pdf(paste0("figures/prop_vacc_by_age10yr_", Sys.Date(), ".pdf"), height=11, width = 8.5)
+for (i in 1:pages_){
+    state_tmp <- states_[state_groups==i]
+    print(vacc_data_10yr %>% filter(USPS %in% state_tmp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS))
+}
+dev.off()
+
+```
+
+
+
+## Plot problem states to check
+
+### 1. Major Issues
+
+```{r}
+usps_samp <- c("AR","DE","DC","IA","NY","LA","MT","NH","OK","PR","WY","WV")
+vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS)
+```
+
+#### AR
+- No Data reported
+```{r}
+vacc_data %>% filter(USPS=="AR")
+```
+
+
+#### NY
+- No Data reported
+```{r}
+vacc_data %>% filter(USPS=="NY")
+# missing from these data
+
+data("idd_vacc_clean")
+
+idd_vacc_clean %>% filter(state == "New York")
+idd_vacc_data %>% filter(state == "New York")
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+
+cci_vacc_data %>% filter(State=="NY")
+
+```
+No data included for NY - it exists on their dashboard though: https://covid19vaccine.health.ny.gov/vaccine-demographic-data
+
+
+#### ND
+- No Data reported
+Data are weird for ND: Pulled new data and added to package needed: https://www.health.nd.gov/covid19vaccine/dashboard
+```{r}
+plot_state_curves(vacc_age_data=vacc_data_10yr, states="ND")
+
+state_ <- "ND"
+vacc_data %>% filter(USPS==state_) %>% View()
+# missing from these data
+
+# IDD data
+data("idd_vacc_clean")
+idd_vacc_clean %>% filter(USPS == state_, age=="80_100") %>% arrange(date) %>% View()
+idd_vacc_data %>% filter(state == "New York")
+# none available
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+# # Dig into this function
+# cci_vacc_data_clean <- process_cci_age_vacc(data=cci_vacc_data,
+#                                       daily_state_vacc = daily_state_vacc,
+#                                       state_pop_ageXyr = state_pop_age10yr) %>%
+#     left_join(state_pop_age10yr %>% select(USPS, geoid) %>% distinct())
+
+data=cci_vacc_data %>% filter(State==state_)
+state_pop_ageXyr = state_pop_age10yr
+# fixed -- dropped extra categories
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+
+```
+
+
+
+#### DE
+- Changed age groups
+```{r}
+state_ <- "DE"
+vacc_data %>% filter(USPS==state_) %>% View()
+# missing from these data
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+# Dig into this function
+cci_vacc_data_clean <- process_cci_age_vacc(data=cci_vacc_data,
+                                      daily_state_vacc = daily_state_vacc,
+                                      state_pop_ageXyr = state_pop_age10yr) %>%
+    left_join(state_pop_age10yr %>% select(USPS, geoid) %>% distinct())
+
+data=cci_vacc_data %>% filter(State==state_)
+state_pop_ageXyr = state_pop_age10yr
+
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+vacc_data_10yr %>% filter(USPS==state_) %>% View()
+
+```
+Data are weird for ND. Fix implemented in code.
+Drop "2021-03-25" and oldest group in "2021-04-02"
+
+
+
+
+#### DC
+- Changed age groups
+```{r}
+state_ <- "DC"
+vacc_data %>% filter(USPS==state_) %>% View()
+# missing from these data
+
+# IDD data
+data("idd_vacc_clean")
+idd_vacc_clean %>% filter(USPS == state_)
+idd_vacc_data %>% filter(state == "New York")
+# none available
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+# # Dig into this function
+# cci_vacc_data_clean <- process_cci_age_vacc(data=cci_vacc_data,
+#                                       daily_state_vacc = daily_state_vacc,
+#                                       state_pop_ageXyr = state_pop_age10yr) %>%
+#     left_join(state_pop_age10yr %>% select(USPS, geoid) %>% distinct())
+
+data=cci_vacc_data %>% filter(State==state_)
+state_pop_ageXyr = state_pop_age10yr
+# fixed -- dropped extra categories
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+
+```
+
+
+
+
+
+#### NC
+- No Data reported
+```{r}
+state_="NC"
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+vacc_data %>% filter(USPS==state_) %>% View()
+# missing from these data
+
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+```
+Appears to be a reporting issue for 2 dates.
+Drop: "2021-03-24" and "2021-04-02"
+
+
+
+
+
+### 2. Moderate Issues
+
+```{r}
+usps_samp <- c("FL","MN","MA","MD","HI","IL","MT","NJ","NE","NC","NM","NV","ND")
+vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS)
+```
+
+
+### 3. Minor Issues
+
+```{r}
+usps_samp <- c("SC","RI","PA","TX","SD","WA","VT","VA","UT")
+vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS)
+
+```
+
+WA
+- Problem with 2nd and 3rd dates.
+```{r}
+# load raw data
+data(idd_vacc_data)
+
+wa_idd <- idd_vacc_data %>% filter(state=="Washington")
+
+wa_all <- vacc_data_10yr %>% filter(state=="Washington")
+
+```
+Looks like it's a problem with the population numbers and different data structure reported.
+Current fix: Drop "2021-02-16" for WA
+
+
+
+#### RI
+```{r}
+vacc_data %>% filter(USPS=="RI")
+```
+Drop last IDD point
+
+
+
+#### SC
+```{r}
+vacc_data %>% filter(USPS=="SC")
+```
+Something weird with data for last date.
+
+
+
+### New Rules to implement:
+
+1. TX - Drop last IDD date
+2. WA - Drop "2021-02-16","2021-03-24"
+3. VA - Drop "2021-05-07"
+4. VT - Drop "2021-03-24"
+5. RI - Drop "2021-03-20"
+6. NC - Drop "2021-03-24" and "2021-04-02"
+7. ND - Drop "2021-03-25" and oldest group in "2021-04-02"
+
+
+
+
+5. PA - ? (problem with only reporting <65, >65 on 1 date)
+
+
+
+# Drop the above issues
+
+```{r}
+
+drop_dates_vaccdat <- function(vacc_data_Xyr = vacc_data_10yr){
+    
+    vacc_data_Xyr <- vacc_data_Xyr %>%
+        filter(
+            !(USPS=="TX" & date=="2021-03-27"),
+            !(USPS=="WA" & date %in% c("2021-02-16","2021-03-24")),
+            !(USPS=="VA" & date=="2021-05-07"),
+            !(USPS=="VT" & date=="2021-05-07"),
+            !(USPS=="RI" & date=="2021-05-07"),
+            !(USPS=="NC" & date=="2021-05-07"))
+    
+    return(vacc_data_Xyr)
+}
+
+```
+
+
+```{r}
+vacc_data_10yr <- drop_dates_vaccdat(vacc_data_Xyr = vacc_data_10yr)
+```
+
+
+
+
+
+
+## Generate plots of all 
+Plot and save to check each state.
+
+```{r}
+dir.create("figures", recursive = TRUE, showWarnings = FALSE)
+states_ <- sort(unique(vacc_data_10yr$USPS))
+pages_ <- ceiling(length(states_)/9)
+state_groups <- sort(rep(1:pages_, 9))[1:length(states_)]
+
+pdf(paste0("figures/prop_vacc_by_age10yr_", Sys.Date(), "_cleaned.pdf"), height=11, width = 8.5)
+for (i in 1:pages_){
+    state_tmp <- states_[state_groups==i]
+    print(vacc_data_10yr %>% filter(USPS %in% state_tmp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS))
+}
+dev.off()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Go through data pull and cleaning step-by-step to identify problems
+
+Through the package, this is done using 
+```vacc_data <- get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")```
+
+```{r}
+
+git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6"
+
+# Load state populations & IDD data
+data("state_pop_age5yr")
+data("idd_vacc_clean")
+
+# Load latest vaccination by state
+daily_state_vacc <- suppressMessages(get_state_vacc() %>% filter(!is.na(dose1)))
+
+
+# pull and process CCI data
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token)
+
+```
+
+### Look at problem states.
+
+```{r}
+
+cci_vacc_data
+
+```
+
+
+
+
+
+
+
+
+
+# Pull Data from JHU CCI github and combine with JHU IDD data
+
+```{r}
+
+# Get clean, but not age group standardized data
+vacc_data <- get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+
+# Make it standardized to either 5yr or 10 year age groups
+vacc_data_5yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
+                                        age_groups = "5yr", # "10yr"
+                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+
+# Make it standardized to either 5yr or 10 year age groups
+vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
+                                        age_groups = "10yr", 
+                                        git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+
+```
+
