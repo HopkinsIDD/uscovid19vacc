@@ -550,7 +550,7 @@ pull_cci_vacc <- function(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"){
         paste0("https://raw.githubusercontent.com/govex/Covid19-demographics/main/demographics_by_state_raw.csv?token=",
                git_token)) %>%
         dplyr::filter(Category=="Vaccines" & grepl("age", Demo_cat_0)) 
-    
+
     # remove rows without age
     defaultW <- getOption("warn") 
     options(warn = -1) 
@@ -1086,8 +1086,6 @@ drop_dates_vaccdat <- function(vacc_data_Xyr = vacc_data_10yr){
             !(USPS=="SC" & (date>=lubridate::as_date("2021-02-01") & date<lubridate::as_date("2021-05-15")) & (age_l>=15 & age_l<=20)),
             !(USPS=="IL" & (date>=lubridate::as_date("2021-03-01") & date<lubridate::as_date("2021-04-01"))),
             !(USPS=="ND" & date<=lubridate::as_date("2021-06-04"))
-            # dplyr::filter(!(USPS=="IA" & date==lubridate::as_date("2021-04-02"))) %>%
-            # dplyr::filter(!(USPS=="HI" & date==lubridate::as_date("2021-04-02")))
         )
     
     return(vacc_data_Xyr)
