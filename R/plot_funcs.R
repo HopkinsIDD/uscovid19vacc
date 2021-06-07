@@ -19,6 +19,8 @@ plot_state_curves <- function(vacc_data = vacc_data_10yr,
     
     if (is.null(states)){
         usps_samp <- sample(unique(vacc_data$USPS), nstates_sample, replace = FALSE)
+    } else {
+        usps_samp <- states
     }
     print(vacc_data %>% dplyr::filter(USPS %in% usps_samp) %>%
         dplyr::arrange(prop_vacc_age) %>%
