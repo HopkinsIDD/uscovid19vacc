@@ -11,7 +11,7 @@ Pull data from JHU CCI github and combine with JHU IDD data that is part of the 
 ```{r setup}
 library(tidyverse)
 library(lubridate)
-
+git_token <- "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"
 
 plot_state_curves <- function(vacc_age_data=vacc_data_10yr, states="DE"){
     print(vacc_age_data %>% filter(USPS %in% states) %>%
@@ -39,12 +39,12 @@ plot_state_curves <- function(vacc_age_data=vacc_data_10yr, states="DE"){
 ```{r, message=FALSE, echo=FALSE}
 
 # Get clean, but not age group standardized data
-vacc_data <- get_clean_us_agevacc(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM") %>% suppressMessages()
+vacc_data <- get_clean_us_agevacc(git_token = git_token) %>% suppressMessages()
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "10yr", 
-                                        git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM") %>% suppressMessages()
+                                        git_token = git_token) %>% suppressMessages()
 
 ```
 
@@ -199,6 +199,82 @@ vacc_data_10yr %>% filter(USPS==state_) %>% View()
 Data are weird for ND. Fix implemented in code.
 Drop "2021-03-25" and oldest group in "2021-04-02"
 
+
+
+
+
+
+#### NJ
+- Changed age groups
+```{r}
+state_ <- "NJ"
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+vacc_data %>% filter(USPS==state_) %>% View()
+# missing from these data
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) #%>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+# Dig into this function
+cci_vacc_data_clean <- process_cci_age_vacc(data=cci_vacc_data,
+                                      daily_state_vacc = daily_state_vacc,
+                                      state_pop_ageXyr = state_pop_age10yr) %>%
+    left_join(state_pop_age10yr %>% select(USPS, geoid) %>% distinct())
+
+data=cci_vacc_data %>% filter(State==state_)
+state_pop_ageXyr = state_pop_age10yr
+
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+vacc_data_10yr %>% filter(USPS==state_) %>% View()
+
+```
+NJ is problematic since they only report 2 doses. We are currently using the proportions to assume proportion of first doses, but that is overestimating older group coverage.
+
+
+
+
+
+#### NV
+- Changed age groups
+```{r}
+state_ <- "NV"
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+vacc_data %>% filter(USPS==state_) %>% View()
+# missing from these data
+
+# Pull and do a quick clean on cci Data
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) #%>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>% clean_cci_vacc()
+cci_vacc_data %>% filter(State==state_) %>% View()
+
+# Dig into this function
+cci_vacc_data_clean <- process_cci_age_vacc(data=cci_vacc_data,
+                                      daily_state_vacc = daily_state_vacc,
+                                      state_pop_ageXyr = state_pop_age10yr) %>%
+    left_join(state_pop_age10yr %>% select(USPS, geoid) %>% distinct())
+
+data=cci_vacc_data %>% filter(State==state_)
+state_pop_ageXyr = state_pop_age10yr
+
+
+plot_state_curves(vacc_age_data=vacc_data_10yr, states=state_)
+
+vacc_data_10yr %>% filter(USPS==state_) %>% View()
+
+```
+NJ is problematic since they only report 2 doses. We are currently using the proportions to assume proportion of first doses, but that is overestimating older group coverage.
 
 
 
@@ -401,8 +477,14 @@ drop_dates_vaccdat <- function(vacc_data_Xyr = vacc_data_10yr){
             !(USPS=="VA" & date=="2021-05-07"),
             !(USPS=="VT" & date=="2021-05-07"),
             !(USPS=="RI" & date=="2021-05-07"),
-            !(USPS=="NC" & date=="2021-05-07"))
-    
+            !(USPS=="NC" & date=="2021-05-07"),
+            !(USPS=="DE" & (date=="2021-03-25" | (age_group=="85_100" & date=="2021-04-02"))),
+            !(USPS=="NC" & (date=="2021-03-24" | date=="2021-04-02") & (age_l>=65)),
+            !(USPS=="ND" & date<=lubridate::as_date("2021-06-04"))
+            # filter(!(USPS=="IA" & date==lubridate::as_date("2021-04-02"))) %>%
+            # filter(!(USPS=="HI" & date==lubridate::as_date("2021-04-02")))
+        )
+
     return(vacc_data_Xyr)
 }
 
@@ -463,11 +545,11 @@ dev.off()
 ## Go through data pull and cleaning step-by-step to identify problems
 
 Through the package, this is done using 
-```vacc_data <- get_clean_us_agevacc(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")```
+```vacc_data <- get_clean_us_agevacc(git_token = git_token)```
 
 ```{r}
 
-git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"
+git_token = git_token
 
 # Load state populations & IDD data
 data("state_pop_age5yr")
@@ -505,17 +587,17 @@ cci_vacc_data
 ```{r}
 
 # Get clean, but not age group standardized data
-vacc_data <- get_clean_us_agevacc(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
+vacc_data <- get_clean_us_agevacc(git_token = git_token)
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_5yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "5yr", # "10yr"
-                                        git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
+                                        git_token = git_token)
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "10yr", 
-                                        git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
+                                        git_token = git_token)
 
 ```
 

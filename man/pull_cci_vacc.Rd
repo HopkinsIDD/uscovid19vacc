@@ -4,7 +4,7 @@
 \alias{pull_cci_vacc}
 \title{Title}
 \usage{
-pull_cci_vacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+pull_cci_vacc(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
 }
 \arguments{
 \item{git_token}{Token required to access data}

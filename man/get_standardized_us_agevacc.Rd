@@ -7,7 +7,7 @@
 get_standardized_us_agevacc(
   vacc_data = NULL,
   age_groups = "5yr",
-  git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6"
+  git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"
 )
 }
 \arguments{

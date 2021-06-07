@@ -4,7 +4,7 @@
 \alias{get_clean_us_agevacc}
 \title{Title}
 \usage{
-get_clean_us_agevacc(git_token = "AB63TGCIYANL5EQ647HRXH3AYAWZ6")
+get_clean_us_agevacc(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
 }
 \arguments{
 \item{git_token}{}

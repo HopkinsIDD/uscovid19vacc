@@ -11,7 +11,9 @@ get_vacc_Xyr_spline(
 )
 }
 \arguments{
-\item{rep_state_vacc}{}
+\item{state_pop_ageXyr}{}
+
+\item{daily_state_vacc}{}
 }
 \value{
 

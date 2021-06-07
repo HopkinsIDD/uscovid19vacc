@@ -7,7 +7,7 @@
 clean_vacc_age_cci(vacc_data, daily_state_vacc, state_pop_ageXyr)
 }
 \arguments{
-\item{state_pop}{}
+\item{state_pop_ageXyr}{}
 }
 \value{
 

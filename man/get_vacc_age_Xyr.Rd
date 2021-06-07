@@ -11,7 +11,7 @@ get_vacc_age_Xyr(
 )
 }
 \arguments{
-\item{date_vacc_cum}{}
+\item{daily_state_vacc}{}
 }
 \value{
 

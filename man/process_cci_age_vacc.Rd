@@ -7,7 +7,9 @@
 process_cci_age_vacc(data = cci_vacc_data, daily_state_vacc, state_pop_ageXyr)
 }
 \arguments{
-\item{data}{}
+\item{daily_state_vacc}{}
+
+\item{state_pop_ageXyr}{}
 }
 \value{
 
