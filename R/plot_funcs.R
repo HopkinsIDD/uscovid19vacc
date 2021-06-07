@@ -20,7 +20,7 @@ plot_state_curves <- function(vacc_data = vacc_data_10yr,
     if (is.null(states)){
         usps_samp <- sample(unique(vacc_data$USPS), nstates_sample, replace = FALSE)
     }
-    vacc_data %>% dplyr::filter(USPS %in% usps_samp) %>%
+    print(vacc_data %>% dplyr::filter(USPS %in% usps_samp) %>%
         dplyr::arrange(prop_vacc_age) %>%
         dplyr::mutate(USPS = forcats::fct_reorder(USPS, (prop_vacc_age))) %>%
         ggplot2::ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
@@ -34,7 +34,7 @@ plot_state_curves <- function(vacc_data = vacc_data_10yr,
         ggplot2::ggtitle("Proportion Vaccinated, By State and Age") +
         ggplot2::theme_bw() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle=90)) +
-        ggplot2::facet_wrap(~USPS) %>% print()
+        ggplot2::facet_wrap(~USPS))
 
 }
 
