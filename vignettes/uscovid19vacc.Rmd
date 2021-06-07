@@ -1,21 +1,39 @@
 ---
 title: "uscovid19vacc Tutorial"
-output: html_notebook
-editor_options: 
-  chunk_output_type: console
+output: rmarkdown::html_vignette
+description: This explains how to use the uscovid19vacc package to pull data collected by the Johns Hopkins Infectious Disease Dynamics Group and Center for Civic Impact, and clean and standardize it.
+vignette: >
+  %\VignetteIndexEntry{uscovid19vacc Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
-# GET VACCINATION BY AGE AND STATE - USA
-
-```{r setup}
-library(tidyverse)
-#library(uscovid19vacc)
-source("R/vacc_funcs.R")
-
+```{r, include=FALSE}
+knitr::opts_chunk$set(message = FALSE)
 ```
 
 
+GET VACCINATION BY AGE AND STATE, USA
+
+```{r, message = FALSE}
+library(tidyverse)
+library(uscovid19vacc)
+#source("R/vacc_funcs.R")
+```
+
+
+
+
+Set the github token for the data, since it's currently a private repo.
+
+```{r, message = FALSE}
+git_token <- "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"
+```
+
+
+
 ## Current Vaccination Coverage
+
 ```{r}
 
 daily_state_vacc <- get_state_vacc() %>%
@@ -30,17 +48,17 @@ Pull data from JHU CCI github and combine with JHU IDD data that is part of the 
 ```{r}
 
 # Get clean, but not age group standardized data
-vacc_data <- get_clean_us_agevacc(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
+vacc_data <- get_clean_us_agevacc(git_token = git_token)
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_5yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "5yr", # "10yr"
-                                        git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM")
+                                        git_token = git_token)
 
 # Make it standardized to either 5yr or 10 year age groups
 vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
                                         age_groups = "10yr", 
-                                        git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM") 
+                                        git_token = git_token) 
 
 
 ```
@@ -49,7 +67,7 @@ vacc_data_10yr <- get_standardized_us_agevacc(vacc_data = vacc_data,
 
 ## Plot a sample of states to check
 
-```{r}
+```{r, fig.width=8, fig.height=8}
 usps_samp <- sample(unique(vacc_data_5yr$USPS), 12, replace = FALSE)
 vacc_data_5yr %>% filter(USPS %in% usps_samp) %>%
               arrange(prop_vacc_age) %>%
@@ -67,7 +85,7 @@ vacc_data_5yr %>% filter(USPS %in% usps_samp) %>%
               facet_wrap(~USPS)
 ```
 
-```{r}
+```{r fig.width=8, fig.height=8}
 vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
               arrange(prop_vacc_age) %>%
               mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
@@ -88,6 +106,7 @@ vacc_data_10yr %>% filter(USPS %in% usps_samp) %>%
 
 ## Generate plots of all 
 
+### 5-year age groups
 ```{r}
 dir.create("figures", recursive = TRUE, showWarnings = FALSE)
 states_ <- sort(unique(vacc_data_5yr$USPS))
@@ -117,10 +136,9 @@ dev.off()
 ```
 
 
-10 year age groups
+### 10-year age groups
 
 ```{r}
-dir.create("figures", recursive = TRUE, showWarnings = FALSE)
 states_ <- sort(unique(vacc_data_10yr$USPS))
 pages_ <- ceiling(length(states_)/9)
 state_groups <- sort(rep(1:pages_, 9))[1:length(states_)]
@@ -148,7 +166,7 @@ dev.off()
 ```
 
 
-Clean dates that are problematic
+## Clean dates that are problematic
 
 ```{r}
 
@@ -157,10 +175,34 @@ vacc_data_10yr_cl <- drop_dates_vaccdat(vacc_data_Xyr = vacc_data_10yr)
 
 ```
 
-## Generate plots of all 
+## Plot a sample of states
+
+```{r fig.width=8, fig.height=8}
+vacc_data_10yr_cl %>% filter(USPS %in% usps_samp) %>%
+              arrange(prop_vacc_age) %>%
+              mutate(USPS = fct_reorder(USPS, (prop_vacc_age))) %>%
+              ggplot(aes(x=date, y=prop_vacc_age, color=age_group, group=age_group)) +
+              geom_line() +
+              geom_point(aes(shape=source, fill=source)) +
+              scale_shape_manual("Source", values = c(21, 23)) +
+              scale_fill_manual("Source", values=c("orange","lightblue4")) +
+              scale_color_discrete("Age group, yrs") +
+              xlab("State") + ylab("proportion vaccinated") +
+              ggtitle("Proportion Vaccinated, By State and Age") +
+              theme_bw() +
+              theme(axis.text.x = element_text(angle=90)) +
+              facet_wrap(~USPS)
+```
+
+
+
+
+
+## Generate plots of cleaned data
+
+### 5-year age groups
 
 ```{r}
-dir.create("figures", recursive = TRUE, showWarnings = FALSE)
 states_ <- sort(unique(vacc_data_5yr_cl$USPS))
 pages_ <- ceiling(length(states_)/9)
 state_groups <- sort(rep(1:pages_, 9))[1:length(states_)]
@@ -186,6 +228,9 @@ for (i in 1:pages_){
 dev.off()
 
 ```
+
+
+### 10-year age groups
 
 ```{r}
 dir.create("figures", recursive = TRUE, showWarnings = FALSE)
@@ -214,6 +259,17 @@ for (i in 1:pages_){
 dev.off()
 
 ```
+
+
+Save the data
+
+```{r}
+dir.create("output")
+readr::write_csv(vacc_data_5yr_cl, "output/vacc_data_5yr_cl.csv")
+readr::write_csv(vacc_data_10yr_cl, "output/vacc_data_10yr_cl.csv")
+
+```
+
 
 
 
