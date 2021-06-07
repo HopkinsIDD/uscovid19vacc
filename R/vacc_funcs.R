@@ -541,9 +541,20 @@ pull_cci_vacc <- function(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM", pull_raw=
     age_vacc_data_raw <- readr::read_csv(
         paste0("https://raw.githubusercontent.com/govex/Covid19-demographics/main/demographics_by_state_raw.csv?token=",
                git_token)) %>%
-        
-        filter(Category=="Vaccines" & grepl("age", Demo_cat_0)) %>%
-        filter(Demo_cat_1!="unknown")
+        filter(Category=="Vaccines" & grepl("age", Demo_cat_0)) 
+    
+    # remove rows without age
+    defaultW <- getOption("warn") 
+    options(warn = -1) 
+    age_vacc_data_raw <- age_vacc_data_raw %>%
+        separate(Demo_cat_1, into=c("age_l","age_r"), sep="_", remove = FALSE) %>%
+        mutate(age_l = as.integer(age_l), age_r = as.integer(age_r))
+    options(warn = defaultW)
+    
+    age_vacc_data_raw <- age_vacc_data_raw %>%
+        filter(!(Demo_cat_1 %in% c("unknown", "missing", "not_available","pending"))) %>%
+        filter(!is.na(age_l)) %>% 
+        dplyr::select(-age_l, -age_r)
 
     return(age_vacc_data_raw)
 }
@@ -568,9 +579,9 @@ clean_cci_vacc <- function(age_vacc_data_raw=cci_vacc_data){
         # filter(State!="IL") %>% # Doing a manual fix of the data below
         # filter(!(State=="NJ" & Estimate_type=="total_cumulative")) %>%
         # filter(!(State=="DE" & Estimate_type=="total_cumulative")) %>%
-        filter(!(State=="NJ" & Estimate_type=="rate_percent")) %>%  # Drop these because they also have numbers vaccinated
-        filter(!(State=="DE" & !(Estimate_type=="total_cumulative" & Metric=="doses_admin"))) %>%
-        mutate(Metric = ifelse(State=="DE", "people_initiated", Metric)) %>%
+        filter(!(State=="NJ" & Estimate_type!="rate_percent")) %>%  # Keep these because NJ reports both doses, not initiation. its not exact but better
+        filter(!(State=="DE" & !(Estimate_type=="total_cumulative" & Metric=="people_initiated"))) %>%
+        filter(!(State=="IA" & !(Estimate_type=="rate_percent" & Metric=="doses_admin"))) %>%
         mutate(Metric = ifelse(State=="LA" & Metric=="people_initiated", "people_partial", Metric))
 
     # Fix IL
@@ -589,6 +600,10 @@ clean_cci_vacc <- function(age_vacc_data_raw=cci_vacc_data){
     age_vacc_data_raw <- age_vacc_data_raw %>%
         filter(!(State %in% c("IL"))) %>%
         bind_rows(age_vacc_tmp)
+    
+    # remove extra categories
+    age_vacc_data_raw <- age_vacc_data_raw %>% filter(!(State=="UT" & Estimate_type!="total_cumulative" & Demo_cat_0!="age"))
+    age_vacc_data_raw <- age_vacc_data_raw %>% filter(!(State=="DC" & Metric!="people_vaccinated"))
 
     return(age_vacc_data_raw)
 }
@@ -619,13 +634,6 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
         mutate(estimate = ifelse(grepl("percent", Estimate_type), estimate/100, estimate),
                date = lubridate::as_date(lubridate::mdy(date))) %>%
         filter(!is.na(date), !is.na(estimate))
-
-    # remove extra categories
-    data <- data %>% filter(!(USPS=="UT" & Estimate_type!="total_cumulative" & Demo_cat_0!="age"))
-    data <- data %>% filter(!(USPS=="DC" & Metric!="people_vaccinated"))
-    data <- data %>% filter(!(USPS=="ND" & date<=lubridate::as_date("2021-06-04")))
-    # filter(!(USPS=="IA" & date==lubridate::as_date("2021-04-02"))) %>%
-    # filter(!(USPS=="HI" & date==lubridate::as_date("2021-04-02")))
 
     # combine "age_gender_sex"
     data_agegender <- data %>% filter(Demo_cat_0=="age_gender_sex") %>%
@@ -674,7 +682,7 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
                                       ifelse(!is.na(rate_per1kpop_demo), rate_per1kpop_demo / 1000, NA))) %>%
         rename(age = Demo_cat_1) %>% select(-Demo_cat_0, -Category)
 
-    #fix weird age issue
+    #fix weird age issues
     data <- data %>%
         mutate(age_l = as.integer(age_l), age_r=as.integer(age_r)) %>%
         mutate(age_l_new = ifelse(age_l>age_r, age_r, age_l),
@@ -769,7 +777,6 @@ clean_vacc_age_cci <- function(vacc_data,
         mutate(date = lubridate::as_date(date)) %>%
         filter(!is.na(date)) %>%
         dplyr::select(state, USPS, date, age, age_l, age_r, dose1_cum=total_cumulative, prop_of_vacc, prop_vacc_age_orig=prop_vacc_age)
-
 
     # Add missing age groups (some states do not report all age groups)
     # - any missing ages below those reported are put into a single 0-X age group
@@ -1026,3 +1033,64 @@ get_standardized_us_agevacc <- function(vacc_data = NULL,
 }
 
 
+
+#' Drop Problematic Dates from data 
+#'
+#' @param vacc_data_Xyr 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+drop_dates_vaccdat <- function(vacc_data_Xyr = vacc_data_10yr){
+    
+    vacc_data_Xyr <- vacc_data_Xyr %>%
+        filter(
+            !(USPS=="TX" & date=="2021-03-27"),
+            !(USPS=="WA" & date %in% c("2021-02-16","2021-03-24")),
+            !(USPS=="VA" & date=="2021-05-07"),
+            !(USPS=="NM" & date=="2021-04-23"),
+            !(USPS=="NM" & (date>=lubridate::as_date("2021-02-01") & date<lubridate::as_date("2021-05-01")) & (age_l>=15 & age_l<=20)),
+            !(USPS=="VT" & date=="2021-05-07"),
+            !(USPS=="MA" & date=="2021-04-29"),
+            !(USPS=="MA" & date=="2021-03-25"),
+            !(USPS=="RI" & date=="2021-05-07"),
+            !(USPS=="RI" & date=="2021-03-20"),
+            !(USPS=="NC" & date=="2021-05-07"),
+            !(USPS=="MD" & date=="2021-04-30"),
+            !(USPS=="MD" & date=="2021-03-05"),
+            !(USPS=="MI" & date=="2021-05-03"),
+            !(USPS=="ME" & date=="2021-04-29"),
+            !(USPS=="MO" & date=="2021-05-03"),
+            !(USPS=="ID" & date=="2021-04-28"),
+            !(USPS=="ID" & date=="2021-03-25"),
+            !(USPS=="HI" & date=="2021-04-02"),
+            !(USPS=="HI" & date=="2021-03-24"),
+            !(USPS=="LA" & date=="2021-04-28"),
+            !(USPS=="FL" & date=="2021-03-24"),
+            !(USPS=="FL" & date=="2021-04-28"),
+            !(USPS=="AZ" & date=="2021-04-29"),
+            !(USPS=="CO" & date=="2021-04-02"),
+            !(USPS=="CO" & date=="2021-04-28"),
+            !(USPS=="AK" & date=="2021-05-07"),
+            !(USPS=="AK" & date=="2021-03-25"),
+            !(USPS=="AK" & date=="2021-04-30"),
+            !(USPS=="MN" & date=="2021-05-02"),
+            !(USPS=="WA" & date=="2021-02-16"),
+            !(USPS=="AL" & (date>lubridate::as_date("2021-02-01") & date<=lubridate::as_date("2021-06-01")) & age_l<20),
+            !(USPS=="LA" & (date>lubridate::as_date("2021-05-15") & (age_l>=50 & age_l<=55))),
+            !(USPS=="DE" & (date=="2021-03-25" | (age_group=="85_100" & date=="2021-04-02"))),
+            !(USPS=="MN" & (date=="2021-03-25" & (age_l>=65))),
+            !(USPS=="TX" & (date=="2021-06-04" & (age_r>=50 & age_l<=60))),
+            !(USPS=="WV" & (date=="2021-04-02" & (age_l>=15 & age_l<=20))),
+            !(USPS=="NC" & (date=="2021-03-24" | date=="2021-04-02") & (age_l>=65)),
+            !(USPS=="UT" & (date=="2021-04-23" | date=="2021-05-07") & (age_l>=15 & age_l<20)),
+            !(USPS=="SC" & (date>=lubridate::as_date("2021-02-01") & date<lubridate::as_date("2021-05-15")) & (age_l>=15 & age_l<=20)),
+            !(USPS=="IL" & (date>=lubridate::as_date("2021-03-01") & date<lubridate::as_date("2021-04-01"))),
+            !(USPS=="ND" & date<=lubridate::as_date("2021-06-04"))
+            # filter(!(USPS=="IA" & date==lubridate::as_date("2021-04-02"))) %>%
+            # filter(!(USPS=="HI" & date==lubridate::as_date("2021-04-02")))
+        )
+    
+    return(vacc_data_Xyr)
+}
