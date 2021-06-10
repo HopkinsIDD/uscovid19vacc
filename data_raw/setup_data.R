@@ -40,6 +40,8 @@ age_5yr <- tidycensus::get_estimates(geography = "state",
                                      breakdown_labels = TRUE)
 
 
+rm(state_pop_age5yr)
+rm(state_pop_age5yr, state_pop_age10yr)
 
 
 # --->  Need to figure out the territories at some point
@@ -49,6 +51,7 @@ age_l_ <- seq(0,80, by=5)
 age_r_ <- seq(4,84, by=5)
 ages_ <- c(paste0("Age ",age_l_, " to ", age_r_, " years"), "Age 85 years and older")
 age_groups <- paste0(c(age_l_,85),"_", c(age_r_,100))
+
 
 state_pop_age5yr <- age_5yr %>%
     filter(AGEGROUP %in% ages_) %>%
@@ -73,7 +76,6 @@ age_5yr_us <- state_pop_age5yr %>%
     dplyr::mutate(prop = round(pop2019 / sum(pop2019),3))
 
 state_pop_age5yr <- state_pop_age5yr %>%
-    rename(statepop_2019est = pop2019est) %>%
     bind_rows(age_5yr_us %>% mutate(GEOID="00", geoid="00000", USPS="US",NAME="United States"))
 
 usethis::use_data(state_pop_age5yr, overwrite = TRUE)
@@ -84,6 +86,7 @@ usethis::use_data(state_pop_age5yr, overwrite = TRUE)
 
 # ~10 year age groups
 state_pop_age10yr <- transform_pop_agegroups(age_l_ = c(0, 12, 16, seq(25,85, by=10)), max_age = 100)
+
 state_pop_age10yr <- state_pop_age10yr %>% 
     left_join(state_pop_age5yr %>% select(USPS, pop2019est) %>% distinct()) %>%
     mutate(pop2019 = round(pop2019est * prop))

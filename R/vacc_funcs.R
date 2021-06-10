@@ -17,7 +17,7 @@ get_state_vacc <- function(){
     # Data from Youyang Gu. for first couple months of vaccination
     # -- we will use data from YYG up to 3/1/2021, then use JHU data (for now)
 
-    data("vacc_us_states_yyg")
+    data("vacc_us_states_yyg", package="uscovid19vacc")
 
     vacc_dat_yyg <- vacc_us_states_yyg %>%
         dplyr::select(USPS = Location,
@@ -271,7 +271,7 @@ transform_pop_agegroups <- function(age_l_ = c(0, 12, 16, seq(25,85, by=10)),
                                     max_age = 100){
 
     # load data from package
-    data("state_pop_age5yr")
+    data("state_pop_age5yr", package="uscovid19vacc")
 
     age_r_ <- c(age_l_[-1]-1, max_age)
     ages_ <- c(paste0("Age ",age_l_, " to ", age_r_, " years"))
@@ -951,8 +951,8 @@ get_cci_vacc_Xyr <- function(cci_vacc_clean,
 get_clean_us_agevacc <- function(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"){
 
     # Load state populations & IDD data
-    data("state_pop_age5yr")
-    data("idd_vacc_clean")
+    data("state_pop_age5yr", package="uscovid19vacc")
+    data("idd_vacc_clean", package="uscovid19vacc")
 
     # Load latest vaccination by state
     daily_state_vacc <- suppressMessages(get_state_vacc() %>% dplyr::filter(!is.na(dose1)))
@@ -1004,11 +1004,11 @@ get_standardized_us_agevacc <- function(vacc_data = NULL,
 
     # Load Xyr state populations
     if (age_groups=="5yr"){
-        tmp <- data("state_pop_age5yr")
+        tmp <- data("state_pop_age5yr", package="uscovid19vacc")
         assign("state_pop_Xyr", get(tmp))
         rm(tmp)
     } else if (age_groups=="10yr"){
-        tmp <- data("state_pop_age10yr")
+        tmp <- data("state_pop_age10yr", package="uscovid19vacc")
         assign("state_pop_Xyr", get(tmp))
         rm(tmp)
     }
