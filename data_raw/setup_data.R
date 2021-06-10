@@ -82,8 +82,11 @@ usethis::use_data(state_pop_age5yr, overwrite = TRUE)
 
 
 # ~10 year age groups
-state_pop_age10yr <- transform_pop_agegroups(age_l_ = c(0, 12, 16, seq(25,85, by=10)),
-                                    max_age = 100)
+state_pop_age10yr <- transform_pop_agegroups(age_l_ = c(0, 12, 16, seq(25,85, by=10)), max_age = 100)
+state_pop_age10yr <- state_pop_age10yr %>% 
+    left_join(state_pop_age5yr %>% select(USPS, pop2019est) %>% distinct()) %>%
+    mutate(pop2019 = round(pop2019est * prop))
+state_pop_age10yr <- state_pop_age10yr %>% select(colnames(state_pop_age5yr))
 
 usethis::use_data(state_pop_age10yr, overwrite = TRUE)
 

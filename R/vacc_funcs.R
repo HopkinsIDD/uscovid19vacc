@@ -284,15 +284,15 @@ transform_pop_agegroups <- function(age_l_ = c(0, 12, 16, seq(25,85, by=10)),
         AGEGROUP = ages_
     )
 
-    state_pop_ageXyr <- get_pop_Xyr_spline(age_data = state_pop_age5yr %>% dplyr::select(location = USPS, age, age_l, age_r, pop=pop2019),
+    state_pop_ageXyr <- get_pop_Xyr_spline(age_data = state_pop_age5yr %>% dplyr::select(location = USPS, age, age_l, age_r, pop),
                                             age_group_data=age_group_dat)
     state_pop_ageXyr <- state_pop_ageXyr %>%
-        dplyr::rename(USPS=location, pop2019=pop) %>%
+        dplyr::rename(USPS=location) %>%
         dplyr::mutate(age_mid = (age_l+age_r)/2 + .5) %>%
         dplyr::left_join(state_pop_age5yr %>% dplyr::select(USPS, NAME, geoid, GEOID) %>% dplyr::distinct()) %>%
         dplyr::left_join(age_group_dat) %>%
         dplyr::group_by(USPS, NAME, geoid) %>%
-        dplyr::mutate(prop = pop2019 / sum(pop2019, na.rm = TRUE)) %>%
+        dplyr::mutate(prop = pop / sum(pop, na.rm = TRUE)) %>%
         dplyr::ungroup() %>%
         dplyr::distinct() %>%
         tibble::as_tibble()
