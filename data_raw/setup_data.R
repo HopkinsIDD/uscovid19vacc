@@ -73,6 +73,7 @@ age_5yr_us <- state_pop_age5yr %>%
     dplyr::mutate(prop = round(pop2019 / sum(pop2019),3))
 
 state_pop_age5yr <- state_pop_age5yr %>%
+    rename(statepop_2019est = pop2019est) %>%
     bind_rows(age_5yr_us %>% mutate(GEOID="00", geoid="00000", USPS="US",NAME="United States"))
 
 usethis::use_data(state_pop_age5yr, overwrite = TRUE)
@@ -82,8 +83,7 @@ usethis::use_data(state_pop_age5yr, overwrite = TRUE)
 
 
 # ~10 year age groups
-state_pop_age10yr <- transform_pop_agegroups(age_l_ = c(0, 12, 16, seq(25,85, by=10)),
-                                    max_age = 100)
+state_pop_age10yr <- transform_pop_agegroups(age_l_ = c(0, 12, 16, seq(25,85, by=10)), max_age = 100)
 
 usethis::use_data(state_pop_age10yr, overwrite = TRUE)
 
