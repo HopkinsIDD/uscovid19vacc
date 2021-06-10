@@ -73,6 +73,7 @@ age_5yr_us <- state_pop_age5yr %>%
     dplyr::mutate(prop = round(pop2019 / sum(pop2019),3))
 
 state_pop_age5yr <- state_pop_age5yr %>%
+    rename(statepop_2019est = pop2019est) %>%
     bind_rows(age_5yr_us %>% mutate(GEOID="00", geoid="00000", USPS="US",NAME="United States"))
 
 usethis::use_data(state_pop_age5yr, overwrite = TRUE)
@@ -87,6 +88,7 @@ state_pop_age10yr <- state_pop_age10yr %>%
     left_join(state_pop_age5yr %>% select(USPS, pop2019est) %>% distinct()) %>%
     mutate(pop2019 = round(pop2019est * prop))
 state_pop_age10yr <- state_pop_age10yr %>% select(colnames(state_pop_age5yr))
+
 
 usethis::use_data(state_pop_age10yr, overwrite = TRUE)
 
