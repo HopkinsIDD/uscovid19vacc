@@ -4,7 +4,10 @@
 \alias{get_state_vacc}
 \title{Get Daily State Vaccination}
 \usage{
-get_state_vacc()
+get_state_vacc(use_jhu_data = FALSE)
+}
+\arguments{
+\item{use_jhu_data}{Whether to use the JHU data on vaccination (TRUE) or the CDC data (FALSE)}
 }
 \value{
 The output from this function is cleaned, up-to-date cumulative and daily COVID-19 vaccination numbers, by state, with dose 1 and 2 for Pfizer and Moderna vaccines (combined).

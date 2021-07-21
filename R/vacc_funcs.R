@@ -6,13 +6,15 @@
 
 #' Get Daily State Vaccination
 #'
+#' @param use_jhu_data Whether to use the JHU data on vaccination (TRUE) or the CDC data (FALSE)
+#'
 #' @return The output from this function is cleaned, up-to-date cumulative and daily COVID-19 vaccination numbers, by state, with dose 1 and 2 for Pfizer and Moderna vaccines (combined).
 #' @export
 #'
 #' @examples
 #' get_state_vacc()
 #'
-get_state_vacc <- function(){
+get_state_vacc <- function(use_jhu_data=FALSE){
 
     # Data from Youyang Gu. for first couple months of vaccination
     # -- we will use data from YYG up to 3/1/2021, then use JHU data (for now)
@@ -28,17 +30,34 @@ get_state_vacc <- function(){
                dose2_daily = administered_dose2_daily_7day_avg_adj) %>%
         dplyr::arrange(USPS, date)
 
-    # Use data from JHU Covid resource center
-    vacc_us_states <- readr::read_csv("https://raw.githubusercontent.com/govex/COVID-19/master/data_tables/vaccine_data/us_data/time_series/vaccine_data_us_timeline.csv")
-    vacc_us_states <- vacc_us_states %>%
-        dplyr::filter(Vaccine_Type=="All") %>%
-        dplyr::mutate(USPS = tidycensus::fips_codes$state[match(FIPS, as.integer(tidycensus::fips_codes$state_code))]) %>%
-        dplyr::filter(!is.na(USPS)) %>%
-        dplyr::select(USPS,
-               date = Date,
-               dose1 = Stage_One_Doses,
-               dose2 = Stage_Two_Doses)
-
+    if (use_jhu_data){
+        # Use data from JHU Covid resource center
+        vacc_us_states <- readr::read_csv("https://raw.githubusercontent.com/govex/COVID-19/master/data_tables/vaccine_data/us_data/time_series/vaccine_data_us_timeline.csv")
+        vacc_us_states <- vacc_us_states %>%
+            dplyr::filter(Vaccine_Type=="All") %>%
+            dplyr::mutate(USPS = tidycensus::fips_codes$state[match(FIPS, as.integer(tidycensus::fips_codes$state_code))]) %>%
+            dplyr::filter(!is.na(USPS)) %>%
+            dplyr::select(USPS,
+                          date = Date,
+                          dose1 = Stage_One_Doses,
+                          dose2 = Stage_Two_Doses)
+        
+        #fix dumb OK issue
+        vacc_us_states <- vacc_us_states %>%
+            mutate(dose1 = ifelse(dose1==11745235 & USPS=="OK", 1745235, dose1))
+        
+    } else {
+        # USE CDC data 
+        vacc_us_states <- readr::read_csv("https://data.cdc.gov/api/views/unsk-b7fc/rows.csv?accessType=DOWNLOAD")
+        vacc_us_states <- vacc_us_states %>%
+            dplyr::mutate(Date = lubridate::mdy(Date)) %>%
+            dplyr::select(USPS = Location,
+                          date = Date,
+                          dose1 = Administered_Dose1_Recip,
+                          dose2 = Series_Complete_Yes) %>%
+            dplyr::filter(!is.na(USPS)) 
+    }
+    
     # Deal with Negatives
     vacc_us_states_d1 <- vacc_us_states %>%
         dplyr::filter(!is.na(dose1)) %>%
@@ -154,7 +173,20 @@ get_state_vacc <- function(){
                dose1=dose1_new, dose2=dose2_new,
                dose1_daily=dose1_7d_daily, dose2_daily=dose2_7d_daily)
 
-
+    if (use_jhu_data){
+        vacc_us_overall <- vacc_us_states %>%
+            filter(USPS!="US") %>%
+            group_by(date) %>%
+            summarise(dose1 = sum(dose1, na.rm = TRUE),
+                      dose1 = sum(dose2, na.rm = TRUE),
+                      dose1_daily=sum(dose1_daily, na.rm=TRUE),
+                      dose2_daily=sum(dose2_daily, na.rm=TRUE)) %>%
+            mutate(USPS="US") 
+        vacc_us_states <- vacc_us_states %>% 
+            filter(USPS != "US") %>%
+            bind_rows(vacc_us_overall)
+    }
+    
     return(vacc_us_states)
 }
 

@@ -34,7 +34,7 @@ plot_state_curves <- function(vacc_age_data=vacc_data_10yr, states="DE"){
 ```
 
 
-# Run functions to generat data
+# Run functions to generate data
 
 ```{r, message=FALSE, echo=FALSE}
 
