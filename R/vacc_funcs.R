@@ -703,8 +703,8 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
 
     # Combine those that are broken out into partial and full
     data_partfull <- (data %>%
-        dplyr::filter(metric_sum == 2) %>%
         tibble::as_tibble() %>%
+        dplyr::filter(metric_sum == 2) %>%
         dplyr::group_by(USPS, Category, Estimate_type, date, Demo_cat_0, Demo_cat_1, age_l, age_r) %>%
         dplyr::summarise(estimate = sum(estimate, na.rm=TRUE)) %>%
         dplyr::mutate(Metric = "people_vaccinated"))
@@ -751,6 +751,9 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
         dplyr::filter(!(USPS=="WV" & (age %in% c("18_100","18_100","16_100","65_100"))))  %>%
         dplyr::distinct()
 
+    data <- data %>% 
+        dplyr::mutate(Metric = replace(Metric, (Metric=="people_fully" & USPS=="NE"), "people_vaccinated"))
+    
     data <- data %>%
         dplyr::group_by(USPS, date) %>%
         dplyr::mutate(remove = (!(Metric %in% c("first_stage_doses", "people_initiated")) & sum(Metric %in% c("first_stage_doses", "people_initiated"))>0)) %>%
@@ -980,10 +983,10 @@ get_cci_vacc_Xyr <- function(cci_vacc_clean,
 #' @export
 #'
 #' @examples
-get_clean_us_agevacc <- function(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"){
+get_clean_us_agevacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS"){
 
     # Load state populations & IDD data
-    data("state_pop_age5yr", package="uscovid19vacc")
+    data("state_pop_age10yr", package="uscovid19vacc")
     data("idd_vacc_clean", package="uscovid19vacc")
 
     # Load latest vaccination by state
@@ -993,13 +996,14 @@ get_clean_us_agevacc <- function(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"){
     # pull and process CCI data
 
     # Pull and do a quick clean on cci Data
-    cci_vacc_data <- pull_cci_vacc(git_token = git_token)
+    cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>%
+        filter(!(State=="ND" & Metric=="people_fully"))
     cci_vacc_data <- clean_cci_vacc(cci_vacc_data)
 
     # Process the data
     cci_vacc_data <- process_cci_age_vacc(data=cci_vacc_data,
                                           daily_state_vacc = daily_state_vacc,
-                                          state_pop_ageXyr = state_pop_age5yr) %>%
+                                          state_pop_ageXyr = state_pop_age10yr) %>%
         dplyr::left_join(state_pop_age5yr %>% dplyr::select(USPS, geoid) %>% dplyr::distinct())
 
     # combine
