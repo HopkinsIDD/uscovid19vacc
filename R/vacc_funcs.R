@@ -756,7 +756,7 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
     data <- data %>%
         dplyr::filter(!(USPS=="WV" & (age %in% c("18_100","18_100","16_100","65_100"))))  %>%
         dplyr::distinct()
-    
+
     data <- data %>% 
         dplyr::mutate(Metric = replace(Metric, (Metric=="people_fully" & USPS=="NE"), "people_vaccinated"))
     
