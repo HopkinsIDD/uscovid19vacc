@@ -433,8 +433,8 @@ get_vacc_Xyr_spline <- function(vacc_age_data=vacc_clean,
     vacc_1yr <- data.table::rbindlist(tmp_) %>% tibble::as_tibble() %>%
         dplyr::mutate(prop_vacc_age = ifelse(is.na(prop_vacc_age), 0, prop_vacc_age)) %>%
         dplyr::left_join(vacc_age_data %>% dplyr::select(USPS, date, state) %>% dplyr::distinct()) %>%
-        dplyr::mutate(prop_vacc_age = ifelse(age<16,0, prop_vacc_age))
-
+        dplyr::mutate(prop_vacc_age = ifelse(age<16 & is.na(prop_vacc_age),0, prop_vacc_age))
+    
     age_groups <- unique(state_pop_ageXyr$age)
     age_l <- unique(state_pop_ageXyr$age_l)
     age_r <- unique(state_pop_ageXyr$age_r)
@@ -1003,14 +1003,15 @@ get_clean_us_agevacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS"){
     
     # Pull and do a quick clean on cci Data
     cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>%
-        filter(!(State=="ND" & Metric=="people_fully"))
+        filter(!(State=="ND" & Metric=="people_fully")) %>%
+        mutate(`7/16/21` = replace(`7/16/21`, State=="CT" & Demo_cat_1=="12_15" & Estimate_type=="rate_percent_demo", 49.3))
     cci_vacc_data <- clean_cci_vacc(cci_vacc_data)
     
     # Process the data
     cci_vacc_data <- process_cci_age_vacc(data=cci_vacc_data,
                                           daily_state_vacc = daily_state_vacc,
                                           state_pop_ageXyr = state_pop_age10yr) %>%
-        dplyr::left_join(state_pop_age5yr %>% dplyr::select(USPS, geoid) %>% dplyr::distinct())
+        dplyr::left_join(state_pop_age10yr %>% dplyr::select(USPS, geoid) %>% dplyr::distinct())
     
     # combine
     vacc_comb <- idd_vacc_clean %>% dplyr::mutate(source = "IDD") %>%
@@ -1042,8 +1043,8 @@ get_standardized_us_agevacc <- function(vacc_data = NULL,
                                         git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"){
 
     # Load latest vaccination by state
-    daily_state_vacc <- suppressMessages(get_state_vacc() %>% dplyr::filter(!is.na(dose1)))
-
+    daily_state_vacc <- suppressMessages(uscovid19vacc::get_state_vacc() %>% dplyr::filter(!is.na(dose1)))
+    
     # Load Xyr state populations
     if (age_groups=="5yr"){
         tmp <- data("state_pop_age5yr", package="uscovid19vacc")
@@ -1054,12 +1055,12 @@ get_standardized_us_agevacc <- function(vacc_data = NULL,
         assign("state_pop_Xyr", get(tmp))
         rm(tmp)
     }
-
+    
     # Pull and clean the data
     if (is.null(vacc_data)){
-        vacc_data <- get_clean_us_agevacc(git_token = git_token)
+        vacc_data <- uscovid19vacc::get_clean_us_agevacc(git_token = git_token)
     }
-
+    
     # Convert to 5yr age groups
     vacc_Xyr <- get_vacc_age_Xyr(vacc_clean=vacc_data,
                                  state_pop_ageXyr = state_pop_Xyr,
@@ -1067,11 +1068,11 @@ get_standardized_us_agevacc <- function(vacc_data = NULL,
         dplyr::filter(!is.nan(prop_of_vacc)) %>%
         dplyr::mutate(age_mid = (age_r + age_l)/2 + .5)%>% tibble::as_tibble() %>%
         dplyr::arrange(USPS, date, age_l)
-
+    
     # add back Source variable
     vacc_Xyr <- vacc_Xyr %>%
         dplyr::left_join(vacc_data %>% dplyr::select(USPS, date, source) %>% dplyr::distinct())
-
+    
     return(vacc_Xyr)
 }
 
