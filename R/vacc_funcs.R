@@ -668,15 +668,15 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
                                  state_pop_ageXyr){
 
     cols_ <- c("State", "Category", "Metric", "Demo_cat_0", "Demo_cat_1", "Estimate_type")
-
+    
     data <- data %>% dplyr::filter(Demo_cat_0 %in% c("age", "age_gender_sex"), Category=="Vaccines") %>%
         dplyr::mutate(Demo_cat_1 = stringr::str_replace(Demo_cat_1, "_older", "_100")) %>%
         tidyr::pivot_longer(cols=-cols_, names_to = "date", values_to = "estimate") %>%
         dplyr::rename(USPS=State) %>%
         dplyr::mutate(estimate = ifelse(grepl("percent", Estimate_type), estimate/100, estimate),
-               date = lubridate::as_date(lubridate::mdy(date))) %>%
+                      date = lubridate::as_date(lubridate::mdy(date))) %>%
         dplyr::filter(!is.na(date), !is.na(estimate))
-
+    
     # combine "age_gender_sex"
     data_agegender <- data %>% dplyr::filter(Demo_cat_0=="age_gender_sex") %>%
         tidyr::separate(Demo_cat_1, c("age_l","age_r","gender"), sep="_", remove = FALSE) %>%
@@ -686,78 +686,87 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
         dplyr::group_by(USPS, Metric, Estimate_type, date, age_l, age_r) %>%
         dplyr::summarise(estimate = sum(estimate, na.rm=TRUE)) %>%
         dplyr::mutate(Demo_cat_1=paste0(age_l, "_", age_r))
-
+    
     # # total_cum
     # data_agegender_rateprctdemo <- data_agegender %>% dplyr::filter(Estimate_type=="rate_percent_demo") %>%
     #     dplyr::filter(gender!="unknown") %>%
     #     dplyr::group_by(USPS, Metric, Estimate_type, date, age_l, age_r) %>%
     #     dplyr::summarise(estimate = mean(estimate, na.rm=TRUE))
-
-    data <- (data %>% dplyr::filter(Demo_cat_0!="age_gender_sex") %>%
+    
+    data <- data %>% dplyr::filter(Demo_cat_0!="age_gender_sex") %>%
         dplyr::bind_rows(data_agegender_totcum) %>%
         tidyr::separate(Demo_cat_1, into=c("age_l","age_r"), sep = "_", remove=FALSE) %>%
         dplyr::group_by(USPS, Category, date, Estimate_type) %>%
         dplyr::mutate(metric_sum = sum(c("people_partial",  "people_fully") %in% Metric)) %>%
         dplyr::ungroup() %>%
-        tibble::as_tibble())
-
+        tibble::as_tibble()
+    
     # Combine those that are broken out into partial and full
-    data_partfull <- (data %>%
+    data_partfull <- data %>% 
+        dplyr::as_tibble() %>%
         dplyr::filter(metric_sum == 2) %>%
-        tibble::as_tibble() %>%
         dplyr::group_by(USPS, Category, Estimate_type, date, Demo_cat_0, Demo_cat_1, age_l, age_r) %>%
         dplyr::summarise(estimate = sum(estimate, na.rm=TRUE)) %>%
-        dplyr::mutate(Metric = "people_vaccinated"))
-
+        dplyr::mutate(Metric = "people_vaccinated")
+    
     data <- data %>%
-        dplyr::filter(!(USPS %in% unique(data_partfull$USPS))) %>%
+        dplyr::filter(!(USPS %in% unique(data_partfull$USPS) & metric_sum>=2)) %>%
         dplyr::full_join(data_partfull) %>%
         dplyr::select(-metric_sum) %>%
-        dplyr::filter(Metric %in% c("first_stage_doses", "people_initiated", "people_partial", "doses_admin", "people_vaccinated")) %>% # First dose
+        dplyr::group_by(USPS, date) %>%
+        dplyr::filter(!(sum(Metric=="people_vaccinated")>=1 & Metric!="people_vaccinated")) %>%
+        dplyr::ungroup()
+    
+    data <- data %>%
+        dplyr::filter(Metric %in% c("first_stage_doses", "people_initiated", "people_partial", "people_fully", "doses_admin", "people_vaccinated")) %>% # First dose
         tidyr::pivot_wider(names_from = Estimate_type, values_from = estimate) %>%
         dplyr::filter(age_l!="unknown" & age_r!="unknown") %>%
         dplyr::group_by(USPS, Metric, Demo_cat_0, date) %>%
         dplyr::mutate(prop_of_vacc = total_cumulative / sum(total_cumulative, na.rm=TRUE)) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(prop_of_vacc = ifelse(is.na(prop_of_vacc) & !is.na(rate_percent), rate_percent, prop_of_vacc),
-               prop_vacc_age = ifelse(!is.na(rate_percent_demo), rate_percent_demo,
-                                      ifelse(!is.na(rate_per1kpop_demo), rate_per1kpop_demo / 1000, NA))) %>%
+                      prop_vacc_age = ifelse(!is.na(rate_percent_demo), rate_percent_demo,
+                                             ifelse(!is.na(rate_per1kpop_demo), rate_per1kpop_demo / 1000, NA))) %>%
         dplyr::rename(age = Demo_cat_1) %>% dplyr::select(-Demo_cat_0, -Category)
-
+    
+    
     #fix weird age issues
     data <- data %>%
         dplyr::mutate(age_l = as.integer(age_l), age_r=as.integer(age_r)) %>%
         dplyr::mutate(age_l_new = ifelse(age_l>age_r, age_r, age_l),
-               age_r = ifelse(age_l>age_r, age_l, age_r),
-               age_l = age_l_new,
-               age = paste0(age_l,"_", age_r)) %>%
+                      age_r = ifelse(age_l>age_r, age_l, age_r),
+                      age_l = age_l_new,
+                      age = paste0(age_l,"_", age_r)) %>%
         dplyr::select(-age_l_new)
-
+    
     # Fix weird HI overlap
     data_hi_ <- data %>% dplyr::filter(USPS=="HI", date==lubridate::as_date("2021-04-02"))
     data_hi_ <- data_hi_ %>%
         dplyr::filter(age=="75_100") %>%
         dplyr::bind_rows(data_hi_ %>% dplyr::filter(age=="60_100") %>%
-                      dplyr::mutate(age="60_74", age_l=60, age_r=74,
-                             total_cumulative = abs(diff(data_hi_$total_cumulative)))) %>%
+                             dplyr::mutate(age="60_74", age_l=60, age_r=74,
+                                           total_cumulative = abs(diff(data_hi_$total_cumulative)))) %>%
         dplyr::mutate(prop_of_vacc = round(total_cumulative / sum(total_cumulative),4))
-
+    
     data <- data %>% dplyr::filter(!(USPS=="HI" & date==lubridate::as_date("2021-04-02"))) %>%
         dplyr::bind_rows(data_hi_) %>%
         dplyr::arrange(USPS, date, age_l)
-
+    
     # Get rid of extra groups in WV
     data <- data %>%
         dplyr::filter(!(USPS=="WV" & (age %in% c("18_100","18_100","16_100","65_100"))))  %>%
         dplyr::distinct()
-
+    
+    data <- data %>% 
+        dplyr::mutate(Metric = replace(Metric, (Metric=="people_fully" & USPS=="NE"), "people_vaccinated"))
+    
     data <- data %>%
         dplyr::group_by(USPS, date) %>%
         dplyr::mutate(remove = (!(Metric %in% c("first_stage_doses", "people_initiated")) & sum(Metric %in% c("first_stage_doses", "people_initiated"))>0)) %>%
         dplyr::ungroup() %>%
         dplyr::filter(remove!=TRUE)
-
-
+    
+    
     # Clean CCI data
     dates_ <- sort(unique(data$date))
     cci_vacc_clean <- tibble::tibble()
@@ -769,10 +778,10 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
     }
     cci_vacc_clean <- cci_vacc_clean %>%
         dplyr::mutate(prop_vacc_age = ifelse(prop_vacc_age>0.99, .99, prop_vacc_age),
-               dose1_age = round(prop_vacc_age*pop)) %>%
+                      dose1_age = round(prop_vacc_age*pop)) %>%
         dplyr::group_by(USPS, date) %>%
         dplyr::mutate(prop_of_vacc = round(dose1_age / sum(dose1_age, na.rm=TRUE),3))
-
+    
     return(cci_vacc_clean)
 }
 
@@ -980,34 +989,35 @@ get_cci_vacc_Xyr <- function(cci_vacc_clean,
 #' @export
 #'
 #' @examples
-get_clean_us_agevacc <- function(git_token = "AB63TGGKM6VBDNGJHXRRP7LAYPDIM"){
+get_clean_us_agevacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS"){
 
     # Load state populations & IDD data
-    data("state_pop_age5yr", package="uscovid19vacc")
+    data("state_pop_age10yr", package="uscovid19vacc")
     data("idd_vacc_clean", package="uscovid19vacc")
-
+    
     # Load latest vaccination by state
     daily_state_vacc <- suppressMessages(get_state_vacc() %>% dplyr::filter(!is.na(dose1)))
-
-
+    
+    
     # pull and process CCI data
-
+    
     # Pull and do a quick clean on cci Data
-    cci_vacc_data <- pull_cci_vacc(git_token = git_token)
+    cci_vacc_data <- pull_cci_vacc(git_token = git_token) %>%
+        filter(!(State=="ND" & Metric=="people_fully"))
     cci_vacc_data <- clean_cci_vacc(cci_vacc_data)
-
+    
     # Process the data
     cci_vacc_data <- process_cci_age_vacc(data=cci_vacc_data,
                                           daily_state_vacc = daily_state_vacc,
-                                          state_pop_ageXyr = state_pop_age5yr) %>%
+                                          state_pop_ageXyr = state_pop_age10yr) %>%
         dplyr::left_join(state_pop_age5yr %>% dplyr::select(USPS, geoid) %>% dplyr::distinct())
-
+    
     # combine
     vacc_comb <- idd_vacc_clean %>% dplyr::mutate(source = "IDD") %>%
         dplyr::bind_rows(cci_vacc_data %>% dplyr::mutate(source = "CCI")) %>%
         dplyr::select(USPS, state, geoid, date, source, pop,
-               age, age_l, age_r,
-               dose1, dose1_age, prop_vacc_age, prop_of_vacc)%>%
+                      age, age_l, age_r,
+                      dose1, dose1_age, prop_vacc_age, prop_of_vacc)%>%
         dplyr::mutate(age_mid = (age_r + age_l)/2 + .5)%>% tibble::as_tibble() %>%
         dplyr::arrange(USPS, date, age_l)
 
