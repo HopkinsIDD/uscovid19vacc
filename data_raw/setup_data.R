@@ -95,6 +95,37 @@ usethis::use_data(state_pop_age10yr, overwrite = TRUE)
 
 
 
+
+
+# ~ 1 year state population -----------------------------------------------
+
+state_pop_1yr <- readr::read_csv("data_raw/state_age_1yr_pops.csv")
+
+state_pop <- readr::read_csv("data_raw/geodata_territories_2019_statelevel.csv")
+state_pop <- state_pop %>%
+    bind_rows(tibble(USPS = "US", geoid="00000", pop2019est=sum(state_pop$pop2019est, na.rm=TRUE)))
+
+state_pop_1yr <- state_pop_1yr %>%
+    rename(pop = population, 
+           pop2019est = state_population,
+           NAME = location_name,
+           GEOID = location) %>%
+    mutate(geoid = stringr::str_pad(GEOID, width = 5, side="right", pad="0")) %>%
+    full_join(state_pop %>% select(-pop2019est))
+
+state_pop_1yr <- state_pop_1yr %>% select(USPS, NAME, geoid, GEOID, age, pop2019est, pop)
+
+usethis::use_data(state_pop_1yr, overwrite = TRUE)
+
+
+
+
+
+
+
+
+
+
 # Age-specific Vaccination, pre-CCI ---------------------------------------
 
 

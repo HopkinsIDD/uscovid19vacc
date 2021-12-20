@@ -583,11 +583,11 @@ get_pop_Xyr_spline <- function(age_data, age_group_data){
 #'
 #' @examples
 pull_cci_vacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS", min_vacc_age=16){
-
+    
     age_vacc_data_raw <- readr::read_csv(
-        paste0("https://raw.githubusercontent.com/govex/Covid19-demographics/main/demographics_by_state_raw.csv?token=",
-               git_token)) %>%
+        "https://raw.githubusercontent.com/govex/COVID-19/master/data_tables/demographic_data/demographics_by_state_raw.csv") %>%
         dplyr::filter(Category=="Vaccines" & grepl("age", Demo_cat_0)) 
+
 
     # remove rows without age
     defaultW <- getOption("warn") 
@@ -600,7 +600,6 @@ pull_cci_vacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS", min_vacc_
     # age_vacc_data_raw <- age_vacc_data_raw %>%
     #     dplyr::mutate(age_l = replace(age_l, age_l<min_vacc_age & , min_vacc_age))
     # 
-    
     
     options(warn = defaultW)
     
@@ -1003,7 +1002,7 @@ get_cci_vacc_Xyr <- function(cci_vacc_clean,
 #' @export
 #'
 #' @examples
-get_clean_us_agevacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS"){
+get_clean_us_agevacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS", min_vacc_age=5){
 
     # Load state populations & IDD data
     data("state_pop_age10yr", package="uscovid19vacc")
@@ -1016,7 +1015,7 @@ get_clean_us_agevacc <- function(git_token = "AB63TGALF5P7EDIKSV46LIDBEAGDS"){
     # pull and process CCI data
     
     # Pull and do a quick clean on cci Data
-    cci_vacc_data <- uscovid19vacc::pull_cci_vacc(git_token = git_token) %>%
+    cci_vacc_data <- uscovid19vacc::pull_cci_vacc(git_token = git_token, min_vacc_age=min_vacc_age) %>%
         filter(!(State=="ND" & Metric=="people_fully")) %>%
         mutate(`7/16/21` = replace(`7/16/21`, State=="CT" & Demo_cat_1=="12_15" & Estimate_type=="rate_percent_demo", 49.3)) %>%
         filter(!(State=="UT" & grepl("30_39",Demo_cat_1))) %>%
@@ -1084,7 +1083,7 @@ get_standardized_us_agevacc <- function(vacc_data = NULL,
     #vacc_data %>% filter(USPS=="CA") %>% ggplot(aes(date, prop_vacc_age, color=age)) + geom_point() +geom_line()
 
     
-    # Convert to 5yr age groups
+    # Convert to Xyr age groups
     vacc_Xyr <- uscovid19vacc::get_vacc_age_Xyr(vacc_clean=vacc_data,
                                  state_pop_ageXyr = state_pop_Xyr,
                                  daily_state_vacc = daily_state_vacc) %>%
