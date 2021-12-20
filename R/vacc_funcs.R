@@ -682,7 +682,8 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
     cols_ <- c("State", "Category", "Metric", "Demo_cat_0", "Demo_cat_1", "Estimate_type")
     
     data <- data %>% dplyr::filter(Demo_cat_0 %in% c("age", "age_gender_sex"), Category=="Vaccines") %>%
-        dplyr::mutate(Demo_cat_1 = stringr::str_replace(Demo_cat_1, "_older", "_100")) %>%
+        dplyr::select(-additional_doses) %>%
+         dplyr::mutate(Demo_cat_1 = stringr::str_replace(Demo_cat_1, "_older", "_100")) %>%
         tidyr::pivot_longer(cols=-cols_, names_to = "date", values_to = "estimate") %>%
         dplyr::rename(USPS=State) %>%
         dplyr::mutate(estimate = ifelse(grepl("percent", Estimate_type), estimate/100, estimate),
@@ -691,8 +692,7 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
     
     # combine "age_gender_sex"
     data_agegender <- data %>% dplyr::filter(Demo_cat_0=="age_gender_sex") %>%
-        tidyr::separate(Demo_cat_1, c("age_l","age_r","gender"), sep="_", remove = FALSE) %>%
-        dplyr::filter(age_l!="unknown")
+        tidyr::separate(Demo_cat_1, c("age_l","age_r","gender"), sep="_|-", remove = FALSE) 
     # total_cum
     data_agegender_totcum <- data_agegender %>% dplyr::filter(Estimate_type=="total_cumulative") %>%
         dplyr::group_by(USPS, Metric, Estimate_type, date, age_l, age_r) %>%
@@ -730,6 +730,8 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
         dplyr::ungroup()
     
     data <- data %>%
+        dplyr::filter(!(USPS=="NV" & estimate==43.420)) %>% # remove error
+        dplyr::filter(!is.na(Estimate_type), !is.na(estimate)) %>%
         dplyr::filter(Metric %in% c("first_stage_doses", "people_initiated", "people_partial", "people_fully", "doses_admin", "people_vaccinated")) %>% # First dose
         tidyr::pivot_wider(names_from = Estimate_type, values_from = estimate) %>%
         dplyr::filter(age_l!="unknown" & age_r!="unknown") %>%
@@ -741,6 +743,13 @@ process_cci_age_vacc <- function(data=cci_vacc_data,
                                              ifelse(!is.na(rate_per1kpop_demo), rate_per1kpop_demo / 1000, NA))) %>%
         dplyr::rename(age = Demo_cat_1) %>% dplyr::select(-Demo_cat_0, -Category)
     
+    # to find duplicates
+    # tmp <- data %>%
+    #     dplyr::filter(Metric %in% c("first_stage_doses", "people_initiated", "people_partial", "people_fully", "doses_admin", "people_vaccinated")) %>% # First dose
+    #     select(USPS, Category, Metric, Demo_cat_1, age_l, age_r, date, Estimate_type) %>% 
+    #     mutate(dupl = duplicated(.)) %>%
+    #     filter(dupl)
+    # 
     
     #fix weird age issues
     data <- data %>%
